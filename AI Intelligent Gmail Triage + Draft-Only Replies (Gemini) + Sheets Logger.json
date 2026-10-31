@@ -1,0 +1,1051 @@
+{
+  "name": "AI Intelligent Gmail Triage + Draft-Only Replies (Gemini) + Sheets Logger",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "-from:me"
+        },
+        "options": {}
+      },
+      "id": "cd505daf-084e-491a-b176-bb0dcfe95dfb",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        288
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.from || $json.headers?.from || '' }}",
+              "operation": "notContains",
+              "value2": "noreply"
+            },
+            {
+              "value1": "={{ $json.from || $json.headers?.from || '' }}",
+              "operation": "notContains",
+              "value2": "no-reply"
+            },
+            {
+              "value1": "={{ $json.from || $json.headers?.from || '' }}",
+              "operation": "notContains",
+              "value2": "donotreply"
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "5cac0301-8064-49ac-ae92-d75d7a89fe36",
+      "name": "Filter Noise",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        16,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "options": {}
+      },
+      "id": "cfa1577c-cc9b-4e3e-af8a-b5f101079450",
+      "name": "Get Full Message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        272
+      ],
+      "webhookId": "79564756-da17-4876-86ed-0712241141fa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "from",
+              "name": "from",
+              "value": "={{ $json.from || $json.headers?.from || $json.payload?.headers?.find(h => h.name.toLowerCase() === 'from')?.value || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "subject",
+              "name": "subject",
+              "value": "={{ $json.subject || $json.headers?.subject || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "body",
+              "name": "body",
+              "value": "={{ ($json.text || $json.snippet || $json.body || '').substring(0, 5000) }}",
+              "type": "string"
+            },
+            {
+              "id": "messageId",
+              "name": "messageId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "threadId",
+              "name": "threadId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3f362a76-69c6-4367-9d96-51574d552a1a",
+      "name": "Prepare Email Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 500,
+          "temperature": 0.2
+        }
+      },
+      "id": "c10bca6a-5110-4b95-8161-02ffe74682f9",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        464
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=From: {{ $json.from }}\nSubject: {{ $json.subject }}\nBody:\n{{ $json.body }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an expert Gmail email triage specialist. Classify the email into EXACTLY ONE of these categories:\n\n- Primary: Real human-to-human messages that usually need attention or a reply (work, personal conversations, questions, meetings, important requests).\n- Social: Notifications from social networks (LinkedIn, Facebook, X/Twitter, Instagram, etc.).\n- Promotions: Marketing, newsletters, deals, offers, sales, product announcements.\n- Updates: Automated transactional messages (receipts, order confirmations, shipping updates, statements, password resets, calendar invites, system alerts).\n- Spam: Clearly unwanted, phishing, scam, or pure junk.\n\nRules:\n1. Return ONLY valid JSON. No markdown, no extra text, no code fences.\n2. Be conservative with Primary — only genuine human communication.\n3. Prefer Updates over Promotions for transactional content.\n4. Use Spam only when clearly malicious or pure bulk junk.\n\nRequired JSON schema:\n{\n  \"category\": \"Primary|Social|Promotions|Updates|Spam\",\n  \"confidence\": 0.0-1.0,\n  \"summary\": \"One concise sentence summary\",\n  \"needs_reply\": true/false,\n  \"suggested_reply_tone\": \"professional|friendly|neutral|none\",\n  \"reasoning\": \"Very brief reason\"\n}"
+            }
+          ]
+        }
+      },
+      "id": "ccabc0d9-fce0-4958-b665-675f2cad27ba",
+      "name": "Gemini Classification",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        592,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nlet text = input.text || input.output || input.content || JSON.stringify(input);\n\ntext = text.replace(/```json\\n?/gi, '').replace(/```\\n?/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(text);\n} catch (e) {\n  parsed = {\n    category: \"Primary\",\n    confidence: 0.4,\n    summary: \"Parse failed – manual review needed\",\n    needs_reply: true,\n    suggested_reply_tone: \"professional\",\n    reasoning: \"JSON parse error\"\n  };\n}\n\nconst valid = [\"Primary\", \"Social\", \"Promotions\", \"Updates\", \"Spam\"];\nif (!valid.includes(parsed.category)) {\n  parsed.category = \"Primary\";\n  parsed.confidence = Math.min(parsed.confidence || 0.5, 0.5);\n}\n\nreturn [{\n  json: {\n    ...$('Prepare Email Context').item.json,\n    ...parsed\n  }\n}];"
+      },
+      "id": "9b0bb7e7-ca84-4ec1-832e-d68c41931fc0",
+      "name": "Parse & Validate JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.category }}",
+                    "operation": "equals",
+                    "value2": "Primary"
+                  }
+                ],
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Primary"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.category }}",
+                    "operation": "equals",
+                    "value2": "Social"
+                  }
+                ],
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Social"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.category }}",
+                    "operation": "equals",
+                    "value2": "Promotions"
+                  }
+                ],
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Promotions"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.category }}",
+                    "operation": "equals",
+                    "value2": "Updates"
+                  }
+                ],
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Updates"
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{ $json.category }}",
+                    "operation": "equals",
+                    "value2": "Spam"
+                  }
+                ],
+                "combinator": "and",
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "Spam"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "fe3cf891-8713-4ed7-8a3b-3ff69c54eb80",
+      "name": "Switch by Category",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1072,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "CATEGORY_PERSONAL"
+      },
+      "id": "aab4ad19-b3dd-4c05-8610-3be4baaa6612",
+      "name": "Label Primary",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1296,
+        -144
+      ],
+      "webhookId": "ac7aa066-4e3d-4bdf-96d8-42f571548eb8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needs_reply }}",
+              "value2": true
+            }
+          ],
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "id": "6540a148-94be-4612-960c-b7e4f53900ad",
+      "name": "IF Needs Reply",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxOutputTokens": 400,
+          "temperature": 0.4
+        }
+      },
+      "id": "ed432125-0beb-49ea-a6c9-b82fbd066073",
+      "name": "Google Gemini Chat Model (Draft)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        -16
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Original Subject: {{ $json.subject }}\nOriginal Body:\n{{ $json.body }}\n\nTone: {{ $json.suggested_reply_tone }}\n\nWrite only the plain-text reply body.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a professional personal assistant. Write a short, clear, helpful reply draft.\n- Keep under 120 words.\n- Do not invent facts.\n- Match the requested tone.\n- Start with a greeting and end with a professional closing (e.g. Best regards).\n- Return ONLY the plain text of the reply body. No subject line, no explanations."
+            }
+          ]
+        }
+      },
+      "id": "fbc4704a-a61f-4ae3-98fc-9a5400c51d1f",
+      "name": "Generate Draft Reply",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        1808,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: {{ $('Prepare Email Context').item.json.subject }}",
+        "message": "={{ $json.text || $json.output || $json.content }}",
+        "options": {
+          "threadId": "={{ $('Prepare Email Context').item.json.threadId }}"
+        }
+      },
+      "id": "b08ef7c3-09bb-4e2c-b95e-60861ea0659b",
+      "name": "Create Gmail Draft",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        2112,
+        -192
+      ],
+      "webhookId": "728b8e5d-0bd1-4697-9342-2e6f40987f79",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "action_taken",
+              "name": "action_taken",
+              "value": "Draft created",
+              "type": "string"
+            },
+            {
+              "id": "draft_created",
+              "name": "draft_created",
+              "value": true,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "3a095b8d-7349-4882-a84f-7c35aff86693",
+      "name": "Set Action (Draft Created)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2272,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "action_taken",
+              "name": "action_taken",
+              "value": "Labeled only (Primary – no reply needed)",
+              "type": "string"
+            },
+            {
+              "id": "draft_created",
+              "name": "draft_created",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c2755045-e8d6-4c3a-97a8-6fb4dbc01016",
+      "name": "Set Action (Primary No Reply)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1728,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "CATEGORY_SOCIAL"
+      },
+      "id": "930460a6-6c64-4221-87db-435015197141",
+      "name": "Label Social",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1296,
+        80
+      ],
+      "webhookId": "91d43638-3553-41a9-a94e-06ff46b24463",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "action_taken",
+              "name": "action_taken",
+              "value": "Labeled as Social",
+              "type": "string"
+            },
+            {
+              "id": "draft_created",
+              "name": "draft_created",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e87102be-dbb2-42f0-be4e-d1a7c91d656b",
+      "name": "Set Action (Social)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "CATEGORY_PROMOTIONS"
+      },
+      "id": "98b29461-b5da-4e9c-9ec5-a2f321a147af",
+      "name": "Label Promotions",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1296,
+        256
+      ],
+      "webhookId": "0b252776-3f0c-4a58-8a5a-6254ff24323f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "action_taken",
+              "name": "action_taken",
+              "value": "Labeled as Promotions",
+              "type": "string"
+            },
+            {
+              "id": "draft_created",
+              "name": "draft_created",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "55b76dc5-f317-493e-80de-4eb9d37b6811",
+      "name": "Set Action (Promotions)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "CATEGORY_UPDATES"
+      },
+      "id": "eb5190d3-8fce-4271-ac97-afed787d1aaf",
+      "name": "Label Updates",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1296,
+        400
+      ],
+      "webhookId": "afba175b-631a-477b-b476-20720ab8fe77",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "action_taken",
+              "name": "action_taken",
+              "value": "Labeled as Updates",
+              "type": "string"
+            },
+            {
+              "id": "draft_created",
+              "name": "draft_created",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "59ea1d65-2769-4112-8d03-719a7705f83c",
+      "name": "Set Action (Updates)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "addLabels",
+        "messageId": "={{ $json.messageId }}",
+        "labelIds": "SPAM"
+      },
+      "id": "cb886466-0d33-4500-b74f-70a2236b3c7e",
+      "name": "Label + Move Spam",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1296,
+        576
+      ],
+      "webhookId": "6ffa9093-8c45-4226-a7af-77b399ad3cd0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "un88tFIxIb4nCtSk",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "action_taken",
+              "name": "action_taken",
+              "value": "Moved to Spam",
+              "type": "string"
+            },
+            {
+              "id": "draft_created",
+              "name": "draft_created",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "f18a3e0f-27a9-4add-9905-a833a739ede3",
+      "name": "Set Action (Spam)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1504,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1rKLDCamKEg9TtJQ-72233LVLl0BQfVMTbRC6H7KXA4s",
+          "mode": "list",
+          "cachedResultName": "Email Triage ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rKLDCamKEg9TtJQ-72233LVLl0BQfVMTbRC6H7KXA4s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Triage Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "30522011-8961-4f22-9ac1-75da702a096d",
+      "name": "Google Sheets Logger",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2400,
+        544
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Noise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Noise": {
+      "main": [
+        [
+          {
+            "node": "Get Full Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Message": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Context": {
+      "main": [
+        [
+          {
+            "node": "Gemini Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Gemini Classification",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Classification": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate JSON": {
+      "main": [
+        [
+          {
+            "node": "Switch by Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch by Category": {
+      "main": [
+        [
+          {
+            "node": "Label Primary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Label Social",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Label Promotions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Label Updates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Label + Move Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Primary": {
+      "main": [
+        [
+          {
+            "node": "IF Needs Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Needs Reply": {
+      "main": [
+        [
+          {
+            "node": "Generate Draft Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Action (Primary No Reply)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model (Draft)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Draft Reply",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Draft Reply": {
+      "main": [
+        [
+          {
+            "node": "Create Gmail Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Gmail Draft": {
+      "main": [
+        [
+          {
+            "node": "Set Action (Draft Created)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action (Draft Created)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action (Primary No Reply)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Social": {
+      "main": [
+        [
+          {
+            "node": "Set Action (Social)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action (Social)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Promotions": {
+      "main": [
+        [
+          {
+            "node": "Set Action (Promotions)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action (Promotions)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label Updates": {
+      "main": [
+        [
+          {
+            "node": "Set Action (Updates)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action (Updates)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Label + Move Spam": {
+      "main": [
+        [
+          {
+            "node": "Set Action (Spam)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Action (Spam)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fdbd0e22-14b0-4172-902c-a834a36d4aaf",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "194cf410cc53aff762d85fa6ee934bcd6f2c9b7f10bbbcf7ed03485e5566387b"
+  },
+  "nodeGroups": [],
+  "id": "9bc77L6cOIN2wD20",
+  "tags": []
+}

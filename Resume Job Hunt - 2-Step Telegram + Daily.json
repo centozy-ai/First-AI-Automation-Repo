@@ -1,0 +1,1629 @@
+{
+  "name": "Resume Job Hunt - 2-Step Telegram + Daily",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        480,
+        800
+      ],
+      "id": "3967f931-5dd7-4d5e-bc53-1c65fb250c4b",
+      "name": "Telegram Trigger",
+      "webhookId": "2step-tg-00be7d3a",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        1392,
+        1408
+      ],
+      "id": "f5dbe97d-63c0-4bbd-9b51-5ddf8a533710",
+      "name": "Schedule Trigger (Daily 8AM)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "has-doc",
+              "leftValue": "={{ $json.message.document }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        704,
+        800
+      ],
+      "id": "b24786a4-42e4-4342-8300-746e3d7937fe",
+      "name": "If Message Has Document"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "has-text",
+              "leftValue": "={{ $json.message.text || $json.message.caption || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        880,
+        1040
+      ],
+      "id": "6564ec47-ae52-452a-b335-3a26946b8d86",
+      "name": "If Has Text (Job Role)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "role",
+              "name": "jobRole",
+              "value": "={{ ($json.message.text || $json.message.caption || '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "chat",
+              "name": "telegramChatId",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "name",
+              "name": "userName",
+              "value": "={{ $json.message.from.first_name + ' ' + ($json.message.from.last_name || '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        1024
+      ],
+      "id": "abade3bd-927c-41ce-9323-8a31a89eb5ac",
+      "name": "Prepare Job Role Data"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ",
+          "mode": "list",
+          "cachedResultName": "Job_Hunt_V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1224513812,
+          "mode": "list",
+          "cachedResultName": "PendingRequests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit#gid=1224513812"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telegramChatId": "={{ $json.telegramChatId }}",
+            "jobRole": "={{ $json.jobRole }}",
+            "userName": "={{ $json.userName }}",
+            "status": "waiting_for_resume",
+            "createdAt": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "telegramChatId"
+          ],
+          "schema": [
+            {
+              "id": "telegramChatId",
+              "displayName": "telegramChatId",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobRole",
+              "displayName": "jobRole",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "userName",
+              "displayName": "userName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "createdAt",
+              "displayName": "createdAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1280,
+        1024
+      ],
+      "id": "afac4159-3b51-4dbd-b53b-d72bd3743afb",
+      "name": "Save Pending Request",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegramChatId }}",
+        "text": "={{ '✅ Got it!\\n\\n🎯 Target Role: *' + $json.jobRole + '*\\n\\nNow please send your *resume as a PDF document* in the next message.\\n\\nI am waiting for your PDF...' }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1504,
+        1024
+      ],
+      "id": "bc552bba-48da-4343-bad9-11cf03d8b3fb",
+      "name": "Ask for Resume PDF",
+      "webhookId": "d5a8bdf0-8984-4208-9984-49071e6c6155",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat",
+              "name": "telegramChatId",
+              "value": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+              "type": "number"
+            },
+            {
+              "id": "fileid",
+              "name": "documentFileId",
+              "value": "={{ $json.message.document.file_id }}",
+              "type": "string"
+            },
+            {
+              "id": "fname",
+              "name": "documentFileName",
+              "value": "={{ $json.message.document.file_name || 'resume.pdf' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        640
+      ],
+      "id": "8eaf54c1-6e3a-40d6-a598-219f3df1b0eb",
+      "name": "Prepare Document Data"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ",
+          "mode": "list",
+          "cachedResultName": "Job_Hunt_V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1224513812,
+          "mode": "list",
+          "cachedResultName": "PendingRequests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit#gid=1224513812"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "telegramChatId",
+              "lookupValue": "={{ $json.telegramChatId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1168,
+        640
+      ],
+      "id": "b86353b1-7272-410a-8af6-f019a0d0ed9b",
+      "name": "Lookup Pending Job Role",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "has-role",
+              "leftValue": "={{ $json.jobRole }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1392,
+        640
+      ],
+      "id": "953fdbfa-2f70-450f-8fc5-5c76beec3093",
+      "name": "If Pending Request Found"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Prepare Document Data').item.json.telegramChatId }}",
+        "text": "⚠️ I received a document but I don't have a pending job role for you.\\n\\nPlease first send the *job role* you are targeting (as a text message), then send your resume PDF.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1584,
+        800
+      ],
+      "id": "90eb7c0d-429b-47c6-a743-f4c84d8f8c0b",
+      "name": "Notify - Send Job Role First",
+      "webhookId": "4265a869-13c8-47d7-ae43-447245d31c9e",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $('Prepare Document Data').item.json.documentFileId }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1584,
+        624
+      ],
+      "id": "dcc4fd2a-c12b-491e-a17f-0a913af7e5a3",
+      "name": "Download Resume PDF",
+      "webhookId": "1b9a6300-6de0-4f18-8b6c-9bbc227dcb42",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.readPDF",
+      "typeVersion": 1,
+      "position": [
+        1808,
+        704
+      ],
+      "id": "42533c93-177c-42de-b829-c2ce90a69200",
+      "name": "Extract Resume Text"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "resumeText",
+              "value": "={{ $json.text || $json.content || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "jobRole",
+              "value": "={{ $('Lookup Pending Job Role').item.json.jobRole }}",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "telegramChatId",
+              "value": "={{ $('Prepare Document Data').item.json.telegramChatId }}",
+              "type": "string"
+            },
+            {
+              "id": "r4",
+              "name": "triggerSource",
+              "value": "telegram",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2032,
+        704
+      ],
+      "id": "4ecca063-9f42-4396-bcf0-9f5b154ae813",
+      "name": "Set Resume + Role Data"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegramChatId }}",
+        "text": "={{ '✅ Resume received!\\n\\n🎯 Role: *' + $json.jobRole + '*\\n\\nI am now analyzing jobs against your resume. This may take 1-3 minutes...\\nYou will only receive alerts for matches of *80% or higher*.' }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        704
+      ],
+      "id": "034dbe6e-71b1-4022-9184-aefdea93e364",
+      "name": "Send Processing Acknowledgement",
+      "webhookId": "9339c791-aad2-4459-9cfa-ef7727f6b411",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ",
+          "mode": "list",
+          "cachedResultName": "Job_Hunt_V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "CandidateProfile",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telegramChatId": "={{ $('Set Resume + Role Data').item.json.telegramChatId }}",
+            "jobRole": "={{ $('Set Resume + Role Data').item.json.jobRole }}",
+            "resumeText": "={{ $('Set Resume + Role Data').item.json.resumeText }}",
+            "lastUpdated": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "telegramChatId"
+          ],
+          "schema": [
+            {
+              "id": "telegramChatId",
+              "displayName": "telegramChatId",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobRole",
+              "displayName": "jobRole",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumeText",
+              "displayName": "resumeText",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lastUpdated",
+              "displayName": "lastUpdated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2464,
+        704
+      ],
+      "id": "cc707768-b1ea-4710-bf03-37fd9ecba7bd",
+      "name": "Save Candidate Profile",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ",
+          "mode": "list",
+          "cachedResultName": "Job_Hunt_V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1224513812,
+          "mode": "list",
+          "cachedResultName": "PendingRequests",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit#gid=1224513812"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2688,
+        704
+      ],
+      "id": "b0ee6c57-cfd4-4e03-9baa-9853aaca7128",
+      "name": "Clear Pending Request",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ",
+          "mode": "list",
+          "cachedResultName": "Job_Hunt_V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "CandidateProfile",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1616,
+        1408
+      ],
+      "id": "3862b574-506d-4208-984b-49dfe0b3aa85",
+      "name": "Read Saved Profiles",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "has-resume",
+              "leftValue": "={{ $json.resumeText }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1840,
+        1408
+      ],
+      "id": "bc69afd4-c101-4ef5-a5c4-11d58de72dbc",
+      "name": "If Profile Exists"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s1",
+              "name": "resumeText",
+              "value": "={{ $json.resumeText }}",
+              "type": "string"
+            },
+            {
+              "id": "s2",
+              "name": "jobRole",
+              "value": "={{ $json.jobRole }}",
+              "type": "string"
+            },
+            {
+              "id": "s3",
+              "name": "telegramChatId",
+              "value": "={{ $json.telegramChatId }}",
+              "type": "string"
+            },
+            {
+              "id": "s4",
+              "name": "triggerSource",
+              "value": "schedule",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2080,
+        1392
+      ],
+      "id": "07900dfe-9da4-4bf0-b261-f7f656591fc7",
+      "name": "Set Data (Scheduled)"
+    },
+    {
+      "parameters": {
+        "jsCode": "let data = null;\n\n// Try Path 1 first (Telegram on-demand)\ntry {\n  if ($('Set Resume + Role Data').isExecuted) {\n    data = $('Set Resume + Role Data').item.json;\n  }\n} catch (e) {}\n\n// If Path 1 was not used, try Path 2 (Schedule)\nif (!data) {\n  try {\n    if ($('Set Data (Scheduled)').isExecuted) {\n      data = $('Set Data (Scheduled)').item.json;\n    }\n  } catch (e) {}\n}\n\n// Final fallback – use whatever is currently in the input\nif (!data) {\n  data = $input.first().json;\n}\n\nconst role = (data.jobRole || '').trim();\nconst resumeText = data.resumeText || '';\nconst telegramChatId = data.telegramChatId || '';\nconst triggerSource = data.triggerSource || 'unknown';\n\nif (!role) {\n  throw new Error('No jobRole found in either path');\n}\n\nreturn [{\n  json: {\n    jobRole: role,\n    resumeText: resumeText,\n    telegramChatId: telegramChatId,\n    triggerSource: triggerSource,\n    apifyQuery: role,\n    apifyRemote: 'remote',\n    apifyMaxRows: 12          // keep it low for free tier\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        896
+      ],
+      "id": "5167430a-2f19-46b6-9c89-df577e4eb711",
+      "name": "Build Search Query"
+    },
+    {
+      "parameters": {
+        "actorId": {
+          "__rl": true,
+          "value": "MXLpngmVpE8WTESQr",
+          "mode": "list",
+          "cachedResultName": "🚀 Indeed jobs scraper [PPR] (borderline/indeed-scraper)",
+          "cachedResultUrl": "https://console.apify.com/actors/MXLpngmVpE8WTESQr/input"
+        },
+        "customBody": "={{ JSON.stringify({\n  country: 'us',\n  enableUniqueJobs: true,\n  includeSimilarJobs: false,\n  maxRows: $json.apifyMaxRows || 40,\n  query: $json.apifyQuery,\n  remote: $json.apifyRemote\n}) }}",
+        "timeout": 360,
+        "maxTotalChargeUsd": {}
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 2,
+      "position": [
+        3008,
+        896
+      ],
+      "id": "2c1e8dc2-c7e9-42e5-9023-2471957ccaaa",
+      "name": "Run Indeed Scraper",
+      "credentials": {
+        "apifyApi": {
+          "id": "ayxpoFD81zlce0vd",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Datasets",
+        "datasetId": "={{ $json.defaultDatasetId }}",
+        "offset": {},
+        "options": {}
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 2,
+      "position": [
+        3184,
+        896
+      ],
+      "id": "00794ce8-fc8d-4640-84ed-dcb0a82cac0a",
+      "name": "Get Job Listings",
+      "credentials": {
+        "apifyApi": {
+          "id": "ayxpoFD81zlce0vd",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3408,
+        896
+      ],
+      "id": "d1b1e4e5-0f6c-43b9-86d5-51703f4ac703",
+      "name": "Loop Over Jobs"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert technical recruiter. Score how well the candidate's resume matches this job (0-100).\n\n=== CANDIDATE RESUME ===\n{{ $json.resumeText ? $json.resumeText.substring(0, 12000) : ($('Set Resume + Role Data').item.json.resumeText || $('Set Data (Scheduled)').item.json.resumeText || '').substring(0, 12000) }}\n\n=== TARGET ROLE ===\n{{ $json.jobRole || $('Set Resume + Role Data').item.json.jobRole || $('Set Data (Scheduled)').item.json.jobRole }}\n\n=== JOB LISTING ===\n{{ JSON.stringify($json) }}\n\nBe strict. Only give 80+ when core skills clearly match.\nReturn ONLY structured fields.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a precise technical recruiter. Never inflate scores. Base judgments only on the resume and job data."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        3808,
+        912
+      ],
+      "id": "02b6f1a8-0264-401b-b3f6-3ac2027d2698",
+      "name": "AI Agent - Resume Match Score"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.15
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3744,
+        1072
+      ],
+      "id": "efc7ad19-98e4-4d51-b755-f1e799d7f487",
+      "name": "Google Gemini (Scoring)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "wpg5RIjaHwK17cgR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"matchScore\": 87,\n  \"reason\": \"Strong overlap in n8n, Python, and AI automation projects.\",\n  \"jobTitle\": \"Senior AI Automation Engineer\",\n  \"company\": \"TechCorp\",\n  \"url\": \"https://www.indeed.com/viewjob?jk=xyz789\",\n  \"location\": \"Remote\",\n  \"salary\": \"$130k - $160k\",\n  \"keyMatchingSkills\": [\"n8n\", \"Python\", \"RPA\"],\n  \"gaps\": [\"Limited cloud experience\"]\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3920,
+        1072
+      ],
+      "id": "c899af83-5593-45ed-bb08-9dee9b2e6045",
+      "name": "Structured Output Parser (Score)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "gte80",
+              "leftValue": "={{ $json.output.matchScore }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        4096,
+        912
+      ],
+      "id": "f7fc50fd-0fd9-4ac4-8bb7-ea06650c7226",
+      "name": "If Match ≥ 80%"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a clear Telegram alert for this high-matching job.\n\nData:\n{{ JSON.stringify($json.output) }}\n\nUse Markdown (*bold*). Keep under 450 characters.\nReturn only the structured field.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You write concise professional Telegram job alerts. Output only the required structured JSON."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        4320,
+        832
+      ],
+      "id": "d2bf141e-2d65-4635-8edb-cad9785064f8",
+      "name": "AI Agent - Generate Alert"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.35
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        4320,
+        1008
+      ],
+      "id": "3e55b113-57c8-49ea-bea7-435daf0d82f0",
+      "name": "Google Gemini (Message)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "wpg5RIjaHwK17cgR",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"message\": \"🚀 *High Match Alert* (87%)\\n\\n*Senior AI Automation Engineer* @ TechCorp\\n📍 Remote | 💰 $130k-$160k\\n\\nWhy: Strong n8n + Python experience.\\nSkills: n8n, Python, RPA\\n\\nApply: https://www.indeed.com/viewjob?jk=xyz789\"\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        4448,
+        992
+      ],
+      "id": "9d67db92-e395-4efb-845a-6d60534676dd",
+      "name": "Structured Output Parser (Message)"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set Resume + Role Data').isExecuted ? $('Set Resume + Role Data').item.json.telegramChatId : $('Set Data (Scheduled)').item.json.telegramChatId }}",
+        "text": "={{ $json.output.message }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4640,
+        832
+      ],
+      "id": "8fd18ead-aa74-4bbc-ae69-c66920fff6ae",
+      "name": "Send High Match Alert",
+      "webhookId": "e4fd2308-5fc3-4ddd-8716-45f01638bbc8",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ",
+          "mode": "list",
+          "cachedResultName": "Job_Hunt_V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1137444460,
+          "mode": "list",
+          "cachedResultName": "HighMatches",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1M5tJaf5i7oJPOV4W6O_4w2npIwLoO7JP8P5IyProCLQ/edit#gid=1137444460"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "matchScore": "={{ $json.output.matchScore }}",
+            "jobTitle": "={{ $json.output.jobTitle }}",
+            "company": "={{ $json.output.company }}",
+            "location": "={{ $json.output.location }}",
+            "salary": "={{ $json.output.salary }}",
+            "url": "={{ $json.output.url }}",
+            "reason": "={{ $json.output.reason }}",
+            "keyMatchingSkills": "={{ Array.isArray($json.output.keyMatchingSkills) ? $json.output.keyMatchingSkills.join(', ') : ($json.output.keyMatchingSkills || '') }}",
+            "gaps": "={{ Array.isArray($json.output.gaps) ? $json.output.gaps.join(', ') : ($json.output.gaps || '') }}",
+            "candidateRole": "={{ $('Set Resume + Role Data').isExecuted ? $('Set Resume + Role Data').item.json.jobRole : $('Set Data (Scheduled)').item.json.jobRole }}",
+            "triggerSource": "={{ $('Set Resume + Role Data').isExecuted ? 'telegram' : 'schedule' }}",
+            "scrapedAt": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "matchScore",
+              "displayName": "matchScore",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "jobTitle",
+              "displayName": "jobTitle",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "salary",
+              "displayName": "salary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "keyMatchingSkills",
+              "displayName": "keyMatchingSkills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "gaps",
+              "displayName": "gaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "candidateRole",
+              "displayName": "candidateRole",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "triggerSource",
+              "displayName": "triggerSource",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scrapedAt",
+              "displayName": "scrapedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4336,
+        1440
+      ],
+      "id": "cacd6cd9-6a6d-4fbb-aec2-12731a3ab41c",
+      "name": "Log High Match",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "XL9SbldBK9E3fFmc",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4736,
+        1536
+      ],
+      "id": "6e2b7381-db26-48c0-bc68-8d057020e718",
+      "name": "Continue Loop"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Set Resume + Role Data').isExecuted ? $('Set Resume + Role Data').item.json.telegramChatId : $('Set Data (Scheduled)').item.json.telegramChatId }}",
+        "text": "✅ *Job hunt finished!*\n\nAll openings have been analyzed against your resume.\nOnly matches of *80% or higher* were sent to you and logged.\n\nYour profile is saved. I will automatically re-check for new openings every morning at 8 AM.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3776,
+        688
+      ],
+      "id": "7cf0e236-3f44-48f4-8712-6a2c5ba676af",
+      "name": "Send Completion Summary",
+      "webhookId": "9264be36-58cb-48c6-ae7f-647d4f7fe986",
+      "credentials": {
+        "telegramApi": {
+          "id": "5CDoQ7laB40G57ZZ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3600,
+        912
+      ],
+      "id": "4f0ff1c7-e3cd-4dff-a55f-082d55ab2b02",
+      "name": "15 Sec Wait",
+      "webhookId": "1d6b3096-6526-4e8d-801f-cadddba47582"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        3584,
+        688
+      ],
+      "id": "7f5dc8c4-13a2-4bd7-9188-6d9be21f8cb4",
+      "name": "Limit"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "If Message Has Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Message Has Document": {
+      "main": [
+        [
+          {
+            "node": "Prepare Document Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Has Text (Job Role)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Has Text (Job Role)": {
+      "main": [
+        [
+          {
+            "node": "Prepare Job Role Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Job Role Data": {
+      "main": [
+        [
+          {
+            "node": "Save Pending Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Pending Request": {
+      "main": [
+        [
+          {
+            "node": "Ask for Resume PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Document Data": {
+      "main": [
+        [
+          {
+            "node": "Lookup Pending Job Role",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Pending Job Role": {
+      "main": [
+        [
+          {
+            "node": "If Pending Request Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Pending Request Found": {
+      "main": [
+        [
+          {
+            "node": "Download Resume PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify - Send Job Role First",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Resume PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract Resume Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Resume Text": {
+      "main": [
+        [
+          {
+            "node": "Set Resume + Role Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Resume + Role Data": {
+      "main": [
+        [
+          {
+            "node": "Send Processing Acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Processing Acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Save Candidate Profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Candidate Profile": {
+      "main": [
+        [
+          {
+            "node": "Clear Pending Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Pending Request": {
+      "main": [
+        [
+          {
+            "node": "Build Search Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger (Daily 8AM)": {
+      "main": [
+        [
+          {
+            "node": "Read Saved Profiles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Saved Profiles": {
+      "main": [
+        [
+          {
+            "node": "If Profile Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Profile Exists": {
+      "main": [
+        [
+          {
+            "node": "Set Data (Scheduled)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Data (Scheduled)": {
+      "main": [
+        [
+          {
+            "node": "Build Search Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Search Query": {
+      "main": [
+        [
+          {
+            "node": "Run Indeed Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Indeed Scraper": {
+      "main": [
+        [
+          {
+            "node": "Get Job Listings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Listings": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Jobs": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "15 Sec Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini (Scoring)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Resume Match Score",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser (Score)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser (Score)": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent - Resume Match Score",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Resume Match Score": {
+      "main": [
+        [
+          {
+            "node": "If Match ≥ 80%",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Match ≥ 80%": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Generate Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log High Match",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini (Message)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Generate Alert",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser (Message)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser (Message)": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent - Generate Alert",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Generate Alert": {
+      "main": [
+        [
+          {
+            "node": "Send High Match Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send High Match Alert": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log High Match": {
+      "main": [
+        [
+          {
+            "node": "Continue Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continue Loop": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "15 Sec Wait": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Resume Match Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Send Completion Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e198e27a-bb6c-4c19-8baf-332af7f75605",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "194cf410cc53aff762d85fa6ee934bcd6f2c9b7f10bbbcf7ed03485e5566387b"
+  },
+  "nodeGroups": [],
+  "id": "PTtbu2uup33poerZ",
+  "tags": []
+}

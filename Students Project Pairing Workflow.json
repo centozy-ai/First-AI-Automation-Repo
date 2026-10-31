@@ -1,0 +1,465 @@
+{
+  "name": "Students Project Pairing Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formId": "xXeL25"
+      },
+      "type": "n8n-nodes-tallyforms.tallyTrigger",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        -96
+      ],
+      "id": "bd1cd114-9caa-4a0c-b12d-138d643efd32",
+      "name": "Tally Trigger",
+      "webhookId": "1db4191f-5434-41b4-8e26-4c765375120a",
+      "credentials": {
+        "tallyApi": {
+          "id": "OvsvyxPoHVrbu1lQ",
+          "name": "Tally account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "958ccefa-a5a4-43ac-ab54-b88980400f1f",
+              "name": "Full Name",
+              "value": "={{ $json.question_0jpL5N.value }}",
+              "type": "string"
+            },
+            {
+              "id": "0a3c4b34-dbc9-4ec6-89e3-f0e6c158b682",
+              "name": "Email Address",
+              "value": "={{ $json.question_4NgZDk.value }}",
+              "type": "string"
+            },
+            {
+              "id": "55321a2d-60a9-4e23-b0f5-500574f13c72",
+              "name": "Cohort ID",
+              "value": "={{ $json.question_j9OKqx.value }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -208,
+        -96
+      ],
+      "id": "d84fcd46-c3c6-4b9c-b94b-e0c434938782",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY",
+          "mode": "list",
+          "cachedResultName": "Students ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full Name": "={{ $('Tally Trigger').item.json.question_0jpL5N.value }}",
+            "Email Address": "={{ $('Tally Trigger').item.json.question_4NgZDk.value }}",
+            "Cohort ID": "={{ $('Tally Trigger').item.json.question_j9OKqx.value }}",
+            "Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cohort ID",
+              "displayName": "Cohort ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned Industry",
+              "displayName": "Assigned Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Partner Details",
+              "displayName": "Partner Details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -64,
+        -96
+      ],
+      "id": "58f35213-c31f-48a6-8e82-d746e0db4128",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RQou92YHJFzH2Rko",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        80
+      ],
+      "id": "6e611040-e330-40de-b840-7035cbcd518e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Cohort ID",
+              "lookupValue": "Cohort 2026-A"
+            },
+            {
+              "lookupColumn": "Status",
+              "lookupValue": "Pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -80,
+        80
+      ],
+      "id": "31e4e75d-86eb-4844-947b-238da0aff652",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RQou92YHJFzH2Rko",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Retrieve all incoming student records from the Google Sheets Read Rows node\nconst inputItems = $input.all();\n\n// Filter and map incoming items to ensure we only process valid, pending student entries\nconst students = inputItems\n  .map(item => item.json)\n  .filter(student => student[\"Full Name\"] && student[\"Email Address\"])\n  .map(student => ({\n    rowNumber: student[\"row_number\"],\n    name: student[\"Full Name\"],\n    email: student[\"Email Address\"],\n    cohort: student[\"Cohort ID\"] || \"Default Cohort\"\n  }));\n\n// Return early if no pending students are found\nif (students.length === 0) {\n  return [];\n}\n\n// Available industry bank for project assignment\nconst industries = [\n  \"Healthcare\", \"E-Commerce\", \"Finance & Banking\", \n  \"Real Estate\", \"Logistics & Supply Chain\", \"EdTech\", \n  \"Hospitality & Tourism\", \"Marketing & Advertising\"\n];\n\n// Fisher-Yates Shuffle algorithm for true random pairing\nfunction shuffle(array) {\n  let currentIndex = array.length, randomIndex;\n  while (currentIndex !== 0) {\n    randomIndex = Math.floor(Math.random() * currentIndex);\n    currentIndex--;\n    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];\n  }\n  return array;\n}\n\nconst shuffledStudents = shuffle([...students]);\nconst shuffledIndustries = shuffle([...industries]);\n\nconst pairs = [];\nlet industryIndex = 0;\n\n// Group students into pairs of 2 (or a group of 3 if odd count)\nfor (let i = 0; i < shuffledStudents.length; i += 2) {\n  const currentIndustry = shuffledIndustries[industryIndex % shuffledIndustries.length];\n  industryIndex++;\n\n  if (i === shuffledStudents.length - 1) {\n    // Edge case: Odd number of students -> attach remaining student to the last group\n    if (pairs.length > 0) {\n      pairs[pairs.length - 1].students.push(shuffledStudents[i]);\n    } else {\n      pairs.push({\n        pairId: 1,\n        industry: currentIndustry,\n        students: [shuffledStudents[i]]\n      });\n    }\n  } else {\n    pairs.push({\n      pairId: pairs.length + 1,\n      industry: currentIndustry,\n      students: [shuffledStudents[i], shuffledStudents[i + 1]]\n    });\n  }\n}\n\n// Unroll pairs into individual student output objects formatted for Google Sheets update & Email nodes\nconst output = [];\n\npairs.forEach(pair => {\n  pair.students.forEach((student, index) => {\n    // Generate partner details excluding the current student\n    const partnerList = pair.students\n      .filter((_, idx) => idx !== index)\n      .map(s => `${s.name} (${s.email})`)\n      .join(\", \");\n\n    output.push({\n      json: {\n        // Matches Google Sheets row update primary key\n        row_number: student.rowNumber,\n        \n        // Mapped original fields\n        \"Full Name\": student.name,\n        \"Email Address\": student.email,\n        \"Cohort ID\": student.cohort,\n        \n        // Derived assignment outputs\n        \"Status\": \"Paired & Emailed\",\n        \"Assigned Industry\": pair.industry,\n        \"Partner Details\": partnerList || \"No partner (solo group)\",\n        \"Group ID\": `Group-${pair.pairId}`\n      }\n    });\n  });\n});\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        80
+      ],
+      "id": "789b6f5e-5c65-4a83-85a6-fe7602e1c5d9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json[\"Email Address\"] }}",
+        "subject": "You Have Been Assigned",
+        "emailType": "text",
+        "message": "=Hello {{ $json[\"Full Name\"] }},\n\nCongrats, you have been assigned as follows;\nAssigned Industry: {{ $json[\"Assigned Industry\"] }}\nPartner Details: {{ $json[\"Partner Details\"] }}\nGroup: {{ $json.Group }}\n\nPlease go ahead and liase with your partner and proceed with your project.\n\nBest Regards,\nTeam Walker\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        80
+      ],
+      "id": "205d7775-f11f-4359-8f5c-504ac8bdfad6",
+      "name": "Send a message",
+      "webhookId": "53d267ec-a99a-4286-a90f-5a2b0260237a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TwomnFPU8Ov2le3K",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY",
+          "mode": "list",
+          "cachedResultName": "Students ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LVVx8gaQCln8QCkUWlQeWm-WMRABUWj6ywnu3XbdbqY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email Address": "={{ $json[\"Email Address\"] }}",
+            "Full Name": "={{ $json[\"Full Name\"] }}",
+            "Status": "={{ $json.Status }}",
+            "Assigned Industry": "={{ $json[\"Assigned Industry\"] }}",
+            "Partner Details": "={{ $json[\"Partner Details\"] }}",
+            "Group": "={{ $json[\"Group ID\"] }}"
+          },
+          "matchingColumns": [
+            "Email Address"
+          ],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Cohort ID",
+              "displayName": "Cohort ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Assigned Industry",
+              "displayName": "Assigned Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Partner Details",
+              "displayName": "Partner Details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Group",
+              "displayName": "Group",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        256,
+        80
+      ],
+      "id": "c4b13da1-2476-4081-93bd-0b2747491968",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "RQou92YHJFzH2Rko",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tally Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5eda4691-ca50-40c5-982c-f48633929ab6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f65cdd81ab546c05411fbd8e859d66e1b8cbfea75588ffdfcc12a11180a350b1"
+  },
+  "nodeGroups": [],
+  "id": "KqAb3f8ork9AVZdx",
+  "tags": []
+}
